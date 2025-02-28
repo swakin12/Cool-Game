@@ -16,149 +16,103 @@
         }
         img {
             width: 200px;
+            margin-top: 20px;
         }
-        button {
-            margin: 10px;
+        .upgrade-button {
+            margin-top: 10px;
+            padding: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h2>Welcome to the Clicker Game!</h2>
-    
-    <div id="auth-section">
-        <h3>Create Account / Log In</h3>
-        <input type="text" id="username" placeholder="Enter your username" required>
-        <input type="password" id="password" placeholder="Enter your password" required>
-        <button id="register-login-button">Register / Log In</button>
-        <p id="auth-error" style="color: red; display: none;">Invalid username or password!</p>
-    </div>
+    <h2>Click the Button to Gain Points!</h2>
+    <button id="clicker-button" disabled>Click Me!</button>
+    <p>Points: <span id="points">0</span></p>
+    <p>Clicks per click: <span id="clicks-per-click">1</span></p>
 
-    <div id="game-section" style="display: none;">
-        <h2>Click the Button to Gain Points!</h2>
-        <button id="clicker-button" disabled>Click Me!</button>
-        <p>Player: <span id="current-player">None</span></p>
-        <p>Points: <span id="points">0</span></p>
-        <p>Points per Click: <span id="points-per-click">1</span></p>
+    <h3>Upgrades</h3>
+    <button id="auto-clicker" class="upgrade-button" disabled>Auto Clicker (Cost: 100 Points)</button>
+    <button id="multiplier-upgrade" class="upgrade-button" disabled>Multiplier Upgrade (Cost: 50 Points)</button>
 
-        <h2>Background Music</h2>
-        <audio id="background-music" loop>
-            <source src="chess.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
+    <h2>Background Music</h2>
+    <audio id="background-music" autoplay loop volume="0.3">
+        <source src="chess.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 
-        <img id="gif1" src="raised-eyebrow-eyebrow.gif" alt="Funny Gif">
-        <img id="gif2" src="rat-rat-dance.gif" alt="Dancing Rat">
-    </div>
+    <h2>GIFs for Fun!</h2>
+    <img id="gif1" src="raised-eyebrow-eyebrow.gif" alt="Funny Gif">
+    <img id="gif2" src="rat-rat-dance.gif" alt="Dancing Rat">
 
     <script>
         let points = 0;
-        let pointsPerClick = 1;
-        let username = '';
-        let registeredUsers = JSON.parse(localStorage.getItem('users')) || [];
+        let clicksPerClick = 1;
+        let autoClicker = false;
+        let autoClickerInterval = null;
 
-        // Get audio element
-        const audio = document.getElementById("background-music");
-        audio.volume = 0.3; // Set volume to 0.3 (30%)
+        // Function to update points and handle upgrades
+        function updatePoints() {
+            document.getElementById("points").textContent = points;
+            document.getElementById("clicks-per-click").textContent = clicksPerClick;
 
-        // Play the music when the user clicks anywhere on the page
-        let musicStarted = false;
-        document.addEventListener("click", function() {
-            if (!musicStarted) {
-                audio.play(); // Start playing the music on first click
-                musicStarted = true;
-            }
-        });
-
-        // Check if user is already logged in
-        function checkLoginStatus() {
-            const loggedInUser = localStorage.getItem('loggedInUser');
-            if (loggedInUser) {
-                username = loggedInUser;
-                startGame();
+            // Enable or disable upgrades based on points
+            if (points >= 100) {
+                document.getElementById("auto-clicker").disabled = false;
             } else {
-                document.getElementById('auth-section').style.display = 'block';
-                document.getElementById('game-section').style.display = 'none';
+                document.getElementById("auto-clicker").disabled = true;
+            }
+
+            if (points >= 50) {
+                document.getElementById("multiplier-upgrade").disabled = false;
+            } else {
+                document.getElementById("multiplier-upgrade").disabled = true;
             }
         }
-
-        // Function to start the game
-        function startGame() {
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('game-section').style.display = 'block';
-            document.getElementById('current-player').textContent = username;
-            document.getElementById('clicker-button').disabled = false;
-            document.getElementById('points').textContent = points;
-        }
-
-        // Register or log in user
-        document.getElementById('register-login-button').addEventListener('click', function() {
-            const inputUsername = document.getElementById('username').value.trim();
-            const inputPassword = document.getElementById('password').value.trim();
-            const existingUser = registeredUsers.find(user => user.username === inputUsername);
-
-            if (!inputUsername || !inputPassword) {
-                document.getElementById('auth-error').textContent = 'Please fill in both fields.';
-                document.getElementById('auth-error').style.display = 'block';
-                return;
-            }
-
-            if (existingUser) {
-                // Log in
-                if (existingUser.password === inputPassword) {
-                    username = inputUsername;
-                    localStorage.setItem('loggedInUser', username); // Store logged-in user in localStorage
-                    startGame();
-                } else {
-                    document.getElementById('auth-error').textContent = 'Incorrect password.';
-                    document.getElementById('auth-error').style.display = 'block';
-                }
-            } else {
-                // Register new user
-                registeredUsers.push({ username: inputUsername, password: inputPassword });
-                localStorage.setItem('users', JSON.stringify(registeredUsers)); // Store users in localStorage
-                username = inputUsername;
-                localStorage.setItem('loggedInUser', username); // Store logged-in user
-                startGame();
-            }
-        });
 
         // Event listener for the "Click Me!" button to increment points
         document.getElementById("clicker-button").addEventListener("click", function() {
-            points += pointsPerClick; // Increase points per click
-            document.getElementById("points").textContent = points; // Update points on screen
-            saveGameState(); // Save game state after each click
+            points += clicksPerClick; // Increment points by clicks per click
+            updatePoints(); // Update points and upgrade buttons
         });
 
-        // Save game state to localStorage
-        function saveGameState() {
-            const gameState = {
-                points,
-                username,
-                pointsPerClick
-            };
-            localStorage.setItem('gameState', JSON.stringify(gameState));
-        }
+        // Event listener for auto clicker upgrade
+        document.getElementById("auto-clicker").addEventListener("click", function() {
+            if (points >= 100) {
+                points -= 100; // Deduct points for auto-clicker
+                autoClicker = true;
+                updatePoints();
 
-        // Load game state if user is logged in
-        function loadGameState() {
-            const savedGame = localStorage.getItem('gameState');
-            if (savedGame) {
-                const gameState = JSON.parse(savedGame);
-                points = gameState.points;
-                pointsPerClick = gameState.pointsPerClick;
-
-                // Update UI based on saved game state
-                document.getElementById('points').textContent = points;
-                document.getElementById('points-per-click').textContent = pointsPerClick;
+                // Start auto-clicker functionality (adds 1 point every second)
+                if (autoClicker && !autoClickerInterval) {
+                    autoClickerInterval = setInterval(() => {
+                        points += clicksPerClick;
+                        updatePoints();
+                    }, 1000); // Adds points every second
+                }
             }
-        }
+        });
 
-        // Load game state on page load if logged in
-        window.onload = function() {
-            checkLoginStatus();
-            loadGameState();
-        };
+        // Event listener for multiplier upgrade
+        document.getElementById("multiplier-upgrade").addEventListener("click", function() {
+            if (points >= 50) {
+                points -= 50; // Deduct points for multiplier upgrade
+                clicksPerClick *= 2; // Multiply clicks per click by 2
+                updatePoints();
+            }
+        });
 
+        // Play background music when any click occurs on the page
+        document.addEventListener("click", function() {
+            let audio = document.getElementById("background-music");
+            if (audio.paused) {
+                audio.play();
+            }
+        });
+
+        // Initialize game with the "Click Me!" button enabled
+        document.getElementById("clicker-button").disabled = false;
+        updatePoints(); // Update the initial points and button states
     </script>
 </body>
 </html>
