@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker Game!</title>
+    <style>
+        body {
+            background-color: white;
+            text-align: center;
+        }
+        .badge {
+            display: none;
+            color: gold;
+            font-size: 20px;
+        }
+        img {
+            width: 200px;
+        }
+        button {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Welcome to the Clicker Game!</h2>
+    
+    <div id="auth-section">
+        <h3>Create Account / Log In</h3>
+        <input type="text" id="username" placeholder="Enter your username" required>
+        <input type="password" id="password" placeholder="Enter your password" required>
+        <button id="register-login-button">Register / Log In</button>
+        <p id="auth-error" style="color: red; display: none;">Invalid username or password!</p>
+    </div>
+
+    <div id="game-section" style="display: none;">
+        <h2>Click the Button to Gain Points!</h2>
+        <button id="clicker-button" disabled>Click Me!</button>
+        <p>Player: <span id="current-player">None</span></p>
+        <p>Points: <span id="points">0</span></p>
+        <p>Points per Click: <span id="points-per-click">1</span></p>
+
+        <h2>Background Music</h2>
+        <audio id="background-music" loop>
+            <source src="chess.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+
+        <img id="gif1" src="raised-eyebrow-eyebrow.gif" alt="Funny Gif">
+        <img id="gif2" src="rat-rat-dance.gif" alt="Dancing Rat">
+    </div>
+
+    <script>
+        let points = 0;
+        let pointsPerClick = 1;
+        let username = '';
+        let registeredUsers = JSON.parse(localStorage.getItem('users')) || [];
+
+        // Get audio element
+        const audio = document.getElementById("background-music");
+        audio.volume = 0.3; // Set volume to 0.3 (30%)
+
+        // Play the music when the user clicks anywhere on the page
+        let musicStarted = false;
+        document.addEventListener("click", function() {
+            if (!musicStarted) {
+                audio.play(); // Start playing the music on first click
+                musicStarted = true;
+            }
+        });
+
+        // Check if user is already logged in
+        function checkLoginStatus() {
+            const loggedInUser = localStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                username = loggedInUser;
+                startGame();
+            } else {
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('game-section').style.display = 'none';
+            }
+        }
+
+        // Function to start the game
+        function startGame() {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('game-section').style.display = 'block';
+            document.getElementById('current-player').textContent = username;
+            document.getElementById('clicker-button').disabled = false;
+            document.getElementById('points').textContent = points;
+        }
+
+        // Register or log in user
+        document.getElementById('register-login-button').addEventListener('click', function() {
+            const inputUsername = document.getElementById('username').value.trim();
+            const inputPassword = document.getElementById('password').value.trim();
+            const existingUser = registeredUsers.find(user => user.username === inputUsername);
+
+            if (!inputUsername || !inputPassword) {
+                document.getElementById('auth-error').textContent = 'Please fill in both fields.';
+                document.getElementById('auth-error').style.display = 'block';
+                return;
+            }
+
+            if (existingUser) {
+                // Log in
+                if (existingUser.password === inputPassword) {
+                    username = inputUsername;
+                    localStorage.setItem('loggedInUser', username); // Store logged-in user in localStorage
+                    startGame();
+                } else {
+                    document.getElementById('auth-error').textContent = 'Incorrect password.';
+                    document.getElementById('auth-error').style.display = 'block';
+                }
+            } else {
+                // Register new user
+                registeredUsers.push({ username: inputUsername, password: inputPassword });
+                localStorage.setItem('users', JSON.stringify(registeredUsers)); // Store users in localStorage
+                username = inputUsername;
+                localStorage.setItem('loggedInUser', username); // Store logged-in user
+                startGame();
+            }
+        });
+
+        // Event listener for the "Click Me!" button to increment points
+        document.getElementById("clicker-button").addEventListener("click", function() {
+            points += pointsPerClick; // Increase points per click
+            document.getElementById("points").textContent = points; // Update points on screen
+            saveGameState(); // Save game state after each click
+        });
+
+        // Save game state to localStorage
+        function saveGameState() {
+            const gameState = {
+                points,
+                username,
+                pointsPerClick
+            };
+            localStorage.setItem('gameState', JSON.stringify(gameState));
+        }
+
+        // Load game state if user is logged in
+        function loadGameState() {
+            const savedGame = localStorage.getItem('gameState');
+            if (savedGame) {
+                const gameState = JSON.parse(savedGame);
+                points = gameState.points;
+                pointsPerClick = gameState.pointsPerClick;
+
+                // Update UI based on saved game state
+                document.getElementById('points').textContent = points;
+                document.getElementById('points-per-click').textContent = pointsPerClick;
+            }
+        }
+
+        // Load game state on page load if logged in
+        window.onload = function() {
+            checkLoginStatus();
+            loadGameState();
+        };
+
+    </script>
+</body>
+</html>
