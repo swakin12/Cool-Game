@@ -1,119 +1,963 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clicker Game!</title>
-    <style>
-        body {
-            background-color: white;
-            text-align: center;
-        }
-        .badge {
-            display: none;
-            color: gold;
-            font-size: 20px;
-        }
-        img {
-            width: 200px;
-            margin-top: 20px;
-        }
-        .upgrade-button {
-            margin-top: 10px;
-            padding: 10px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clicker Game with Leaderboard, Chat, & Auto-Click Detection</title>
+  <style>
+    /* Basic styling with rat.gif as the background */
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: url('rat.gif') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+    .game-container {
+      width: 35%;
+      margin: 50px auto;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      border: none;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .upgrade-gif {
+      width: 120px;
+      margin-top: 10px;
+      display: none;
+    }
+    #leaderboard {
+      margin-top: 15px;
+      text-align: left;
+    }
+    #leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    #leaderboard th, #leaderboard td {
+      border: 1px solid #ccc;
+      padding: 4px;
+      text-align: center;
+    }
+    #warning-message,
+    #auto-clicker-warning {
+      color: red;
+      display: none;
+    }
+    #owner-menu {
+      display: none;
+      margin-top: 15px;
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    #owner-menu button {
+      background-color: #e74c3c;
+      font-size: 12px;
+    }
+    #user-id-display {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      color: #333;
+      font-weight: bold;
+      margin-top: 15px;
+      background-color: #e0e0e0;
+      padding: 8px;
+      border-radius: 5px;
+    }
+    /* Cool Guy Menu */
+    #coolguy-menu {
+      display: none;
+      margin-top: 15px;
+      background: #d1e7dd;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    /* Modal styles for Assign Cool Guy and Clear Data */
+    #assign-moderator-modal,
+    #clear-data-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 350px;
+      width: 100%;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    }
+    #search-bar {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #player-list {
+      list-style-type: none;
+      padding: 0;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    #player-list li {
+      padding: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #close-modal {
+      margin-top: 10px;
+      background-color: #e74c3c;
+      color: white;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #close-modal:hover {
+      background-color: #c0392b;
+    }
+    /* Jumpscare Modal */
+    #jumpscare-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+    }
+    #jumpscare-modal .modal-content {
+      max-width: 300px;
+      padding: 20px;
+    }
+    #jumpscare-modal input {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    /* Jumpscare Overlay */
+    #jumpscare-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('jumpscare.png') no-repeat center center;
+      background-size: contain;
+      z-index: 1200;
+    }
+    /* Chat Container Styles */
+    #chat-container {
+      margin-top: 15px;
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    #chat-container h2 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+    #chat-messages {
+      height: 120px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 5px;
+      margin-bottom: 8px;
+      background: #fff;
+      font-size: 13px;
+    }
+    #chat-input {
+      width: 70%;
+      padding: 5px;
+      font-size: 13px;
+    }
+    #chat-send, #clear-chat {
+      padding: 5px 10px;
+      font-size: 13px;
+    }
+    /* -------------------------------
+       Meme Rain Animation with Rotation
+    --------------------------------- */
+    @keyframes fallRotate {
+      0% {
+        top: -10%;
+        opacity: 1;
+        transform: rotate(0deg);
+      }
+      50% {
+        transform: rotate(10deg);
+      }
+      100% {
+        top: 100%;
+        opacity: 0;
+        transform: rotate(0deg);
+      }
+    }
+    .meme-rain-image {
+      position: fixed;
+      width: 100px; /* Adjust size as needed */
+      z-index: 2000;
+      animation: fallRotate 3s linear;
+    }
+    /* Meme Rain Cooldown Bar */
+    #meme-cooldown-bar-container {
+      width: 200px;
+      height: 20px;
+      border: 1px solid #ccc;
+      margin: 5px auto;
+      background-color: #e0e0e0;
+    }
+    /* Initially, the bar is empty (ready state) */
+    #meme-cooldown-bar {
+      height: 100%;
+      width: 0%;
+      background-color: grey;
+    }
+    /* Clear Data Modal specific styles */
+    #clear-data-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+  </style>
+  <!-- Firebase Compatibility Libraries -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <h2>Click the Button to Gain Points!</h2>
-    <button id="clicker-button" disabled>Click Me!</button>
+  <div class="game-container">
+    <h1 style="font-size: 20px;">Clicker Game</h1>
+    <p id="player-name">
+      Name: <span id="name-display">Guest</span>
+      <button id="change-name-btn">Change Name</button>
+    </p>
+    <input type="text" id="name-input" placeholder="Enter your name" style="display:none;" />
+    <button id="confirm-name" style="display:none;">Confirm</button>
+
     <p>Points: <span id="points">0</span></p>
-    <p>Clicks per click: <span id="clicks-per-click">1</span></p>
+    <button id="click-button">Click Me!</button>
+    
+    <p id="warning-message">AutoClicker detected! Wait <span id="cooldown-timer">5</span> seconds before clicking.</p>
+    <p id="auto-clicker-warning">You have been detected for AutoClicking. Your progress will be reset if this continues.</p>
 
-    <h3>Upgrades</h3>
-    <button id="auto-clicker" class="upgrade-button" disabled>Auto Clicker (Cost: 100 Points)</button>
-    <button id="multiplier-upgrade" class="upgrade-button" disabled>Multiplier Upgrade (Cost: 50 Points)</button>
+    <div class="shop">
+      <h2 style="font-size: 16px;">Shop</h2>
+      <button id="buy-multiplier">
+        Buy Cat Upgrade (+1 click) - Cost: <span id="multiplier-cost">50</span>
+      </button>
+      <button id="buy-auto">
+        Buy Rat Upgrade (autoclicker) - Cost: <span id="auto-cost">100</span>
+      </button>
+      <br>
+      <img id="eyebrowGif" class="upgrade-gif" src="cat.gif" alt="Cat Upgrade" />
+      <img id="ratGif" class="upgrade-gif" src="rat.gif" alt="Rat Upgrade" />
+    </div>
 
-    <h2>Background Music</h2>
-    <audio id="background-music" autoplay loop volume="0.3">
-        <source src="chess.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
+    <button id="submit-score">Submit Score</button>
+    <button id="reset-game">Reset Game</button>
 
-    <h2>GIFs for Fun!</h2>
-    <img id="gif1" src="raised-eyebrow-eyebrow.gif" alt="Funny Gif">
-    <img id="gif2" src="rat-rat-dance.gif" alt="Dancing Rat">
+    <div id="leaderboard">
+      <h2 style="font-size: 16px;">Leaderboard</h2>
+      <table id="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <!-- Leaderboard entries will be inserted here -->
+        </tbody>
+      </table>
+    </div>
 
-    <script>
-        let points = 0;
-        let clicksPerClick = 1;
-        let autoClicker = false;
-        let autoClickerInterval = null;
+    <!-- Owner Menu (visible only to owner) -->
+    <div id="owner-menu">
+      <h2 style="font-size: 16px;">Owner Menu</h2>
+      <p>Welcome, owner!</p>
+      <button id="clear-all-data">Clear All Game Data</button>
+      <button id="assign-coolguy-btn">Assign Cool Guy</button>
+      <div id="coolguy-list">
+        <h3 style="font-size: 14px;">Cool Guy List:</h3>
+        <ul id="coolguy-list-ul">
+          <!-- Assigned cool guys will be listed here -->
+        </ul>
+      </div>
+    </div>
 
-        // Function to update points and handle upgrades
-        function updatePoints() {
-            document.getElementById("points").textContent = points;
-            document.getElementById("clicks-per-click").textContent = clicksPerClick;
+    <!-- Cool Guy Menu (visible to cool guys or owner) -->
+    <div id="coolguy-menu">
+      <h2 style="font-size: 16px;">Cool Guy Menu</h2>
+      <button id="jumpscare-player-btn">Jumpscare a Player</button>
+      <button id="meme-rain-btn">Meme Rain</button>
+      <!-- Cooldown progress bar below the Meme Rain button -->
+      <div id="meme-cooldown-bar-container">
+        <div id="meme-cooldown-bar"></div>
+      </div>
+    </div>
 
-            // Enable or disable upgrades based on points
-            if (points >= 100) {
-                document.getElementById("auto-clicker").disabled = false;
-            } else {
-                document.getElementById("auto-clicker").disabled = true;
-            }
+    <div id="user-id-display">
+      Your ID: <span id="user-id"></span>
+    </div>
 
-            if (points >= 50) {
-                document.getElementById("multiplier-upgrade").disabled = false;
-            } else {
-                document.getElementById("multiplier-upgrade").disabled = true;
-            }
+    <!-- Chat Container -->
+    <div id="chat-container">
+      <h2>Chat</h2>
+      <div id="chat-messages">
+        <!-- Chat messages will appear here -->
+      </div>
+      <input type="text" id="chat-input" placeholder="Type your message..." />
+      <button id="chat-send">Send</button>
+      <button id="clear-chat">Clear Chat</button>
+    </div>
+
+    <audio id="click-sound" src="chess.mp3" preload="auto"></audio>
+    <!-- Jumpscare Sound -->
+    <audio id="jumpscare-sound" src="jumpscaresound.mp3" preload="auto"></audio>
+    <!-- Rain Sound for Meme Rain -->
+    <audio id="rain-sound" src="rain.mp3" preload="auto"></audio>
+  </div>
+
+  <!-- Modal for Assigning Cool Guy -->
+  <div id="assign-moderator-modal">
+    <div class="modal-content">
+      <h3>Assign Cool Guy</h3>
+      <input type="text" id="search-bar" placeholder="Search by player ID..." onkeyup="filterPlayers()" />
+      <ul id="player-list">
+        <!-- List of players (not already cool guys) will be populated here -->
+      </ul>
+      <button id="close-modal" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal for Clearing All Game Data -->
+  <div id="clear-data-modal">
+    <div class="modal-content">
+      <h3>Confirm Clear All Game Data</h3>
+      <p>Are you sure? This will reset all players' points and upgrades to their default values!</p>
+      <button id="confirm-clear-data">Yes, Clear Data</button>
+      <button id="cancel-clear-data">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Jumpscare Modal for Cool Guys -->
+  <div id="jumpscare-modal">
+    <div class="modal-content">
+      <h3>Jumpscare a Player</h3>
+      <input type="text" id="jumpscare-target" placeholder="Enter target player ID" />
+      <button id="trigger-jumpscare-btn">Jumpscare</button>
+      <button id="cancel-jumpscare-btn" style="margin-left:10px;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Jumpscare Overlay -->
+  <div id="jumpscare-overlay"></div>
+
+  <script>
+    // ----------------------
+    // Firebase Setup
+    // ----------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyBs2Qtavgt6CnqlF6uCDRzUT13TWkIsTLU",
+      authDomain: "clicker-game-3bba5.firebaseapp.com",
+      projectId: "clicker-game-3bba5",
+      storageBucket: "clicker-game-3bba5.firebasestorage.app",
+      messagingSenderId: "649003578684",
+      appId: "1:649003578684:web:cfc23641af953dbce09a39",
+      measurementId: "G-D45HLXF9PY"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ----------------------
+    // Global Variables & Defaults
+    // ----------------------
+    let points = parseInt(localStorage.getItem("points")) || 0;
+    let playerName = localStorage.getItem("playerName") || "Guest";
+    let clickValue = parseInt(localStorage.getItem("clickValue")) || 1;
+    let multiplierCost = parseInt(localStorage.getItem("multiplierCost")) || 50;
+    let autoCost = parseInt(localStorage.getItem("autoCost")) || 100;
+    let autoClickers = parseInt(localStorage.getItem("autoClickers")) || 0;
+    let memeBoostActive = false;  // Controls the extra 10 clicks boost
+    document.getElementById("points").textContent = points;
+    document.getElementById("name-display").textContent = playerName;
+    document.getElementById("multiplier-cost").textContent = multiplierCost;
+    document.getElementById("auto-cost").textContent = autoCost;
+    document.getElementById("warning-message").style.display = "none";
+    document.getElementById("auto-clicker-warning").style.display = "none";
+
+    let currentUserID = localStorage.getItem("userID");
+    if (!currentUserID) {
+      currentUserID = 'user' + Math.floor(Math.random() * 1000000);
+      localStorage.setItem("userID", currentUserID);
+    }
+    document.getElementById("user-id").textContent = currentUserID;
+
+    // Use onSnapshot so that any changes (including name changes) update the UI immediately.
+    db.collection("players").doc(currentUserID).onSnapshot(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        if(data.username) {
+          playerName = data.username;
+          localStorage.setItem("playerName", playerName);
+          document.getElementById("name-display").textContent = playerName;
         }
+        if(data.score !== undefined) {
+          points = data.score;
+          localStorage.setItem("points", points);
+          document.getElementById("points").textContent = points;
+        }
+        if(data.clickValue !== undefined) {
+          clickValue = data.clickValue;
+          localStorage.setItem("clickValue", clickValue);
+        }
+        if(data.multiplierCost !== undefined) {
+          multiplierCost = data.multiplierCost;
+          localStorage.setItem("multiplierCost", multiplierCost);
+          document.getElementById("multiplier-cost").textContent = multiplierCost;
+        }
+        if(data.autoCost !== undefined) {
+          autoCost = data.autoCost;
+          localStorage.setItem("autoCost", autoCost);
+          document.getElementById("auto-cost").textContent = autoCost;
+        }
+        if(data.autoClickers !== undefined) {
+          autoClickers = data.autoClickers;
+          localStorage.setItem("autoClickers", autoClickers);
+        }
+      }
+    });
 
-        // Event listener for the "Click Me!" button to increment points
-        document.getElementById("clicker-button").addEventListener("click", function() {
-            points += clicksPerClick; // Increment points by clicks per click
-            updatePoints(); // Update points and upgrade buttons
+    function addPlayerToFirestore(player) {
+      db.collection("players").doc(player.id).set(player, { merge: true });
+    }
+    const currentPlayer = { id: currentUserID, username: playerName, score: points };
+    addPlayerToFirestore(currentPlayer);
+
+    function updatePlayerData() {
+      db.collection("players").doc(currentUserID).set({
+        score: points,
+        clickValue: clickValue,
+        multiplierCost: multiplierCost,
+        autoCost: autoCost,
+        autoClickers: autoClickers
+      }, { merge: true });
+      localStorage.setItem("points", points);
+      localStorage.setItem("clickValue", clickValue);
+      localStorage.setItem("multiplierCost", multiplierCost);
+      localStorage.setItem("autoCost", autoCost);
+      localStorage.setItem("autoClickers", autoClickers);
+    }
+
+    // ----------------------
+    // Game Interaction Functionality
+    // ----------------------
+    let clickTimestamps = [];
+    let autoClickWarningCount = 0;
+    const AUTO_CLICK_THRESHOLD = 3;
+    const INTERVAL_LIMIT = 100;
+
+    document.getElementById("click-button").addEventListener("click", function() {
+      let currentTime = Date.now();
+      clickTimestamps.push(currentTime);
+      while (clickTimestamps.length && (currentTime - clickTimestamps[0] > 2000)) {
+        clickTimestamps.shift();
+      }
+      let suspiciousCount = 0;
+      for (let i = 1; i < clickTimestamps.length; i++) {
+        if (clickTimestamps[i] - clickTimestamps[i - 1] < INTERVAL_LIMIT) {
+          suspiciousCount++;
+        }
+      }
+      if (suspiciousCount >= AUTO_CLICK_THRESHOLD) {
+        autoClickWarningCount++;
+        if (autoClickWarningCount < 5) {
+          document.getElementById("warning-message").style.display = "block";
+          disableClickButtonFor(5);
+        } else {
+          document.getElementById("auto-clicker-warning").style.display = "block";
+          resetAllProgress();
+          return;
+        }
+      }
+      // If meme boost is active, add an extra 10 per click
+      let bonus = memeBoostActive ? 10 : 0;
+      points += clickValue + bonus;
+      document.getElementById("points").textContent = points;
+      localStorage.setItem("points", points);
+      updatePlayerData();
+      document.getElementById("click-sound").play();
+    });
+
+    function disableClickButtonFor(seconds) {
+      const clickButton = document.getElementById("click-button");
+      clickButton.disabled = true;
+      let remaining = seconds;
+      document.getElementById("cooldown-timer").textContent = remaining;
+      const interval = setInterval(() => {
+        remaining--;
+        document.getElementById("cooldown-timer").textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          clickButton.disabled = false;
+          document.getElementById("warning-message").style.display = "none";
+        }
+      }, 1000);
+    }
+
+    // Reset Game Button (only resets current player's points and upgrades)
+    document.getElementById("reset-game").addEventListener("click", function() {
+      points = 0;
+      clickValue = 1;
+      multiplierCost = 50;
+      autoCost = 100;
+      autoClickers = 0;
+      localStorage.setItem("points", points);
+      localStorage.setItem("clickValue", clickValue);
+      localStorage.setItem("multiplierCost", multiplierCost);
+      localStorage.setItem("autoCost", autoCost);
+      localStorage.setItem("autoClickers", autoClickers);
+      document.getElementById("points").textContent = points;
+      document.getElementById("multiplier-cost").textContent = multiplierCost;
+      document.getElementById("auto-cost").textContent = autoCost;
+      updatePlayerData();
+    });
+    document.getElementById("submit-score").addEventListener("click", function() {
+      alert("Score submitted: " + points);
+    });
+
+    // ----------------------
+    // Upgrades
+    // ----------------------
+    document.getElementById("buy-multiplier").addEventListener("click", function() {
+      if (points >= multiplierCost) {
+        points -= multiplierCost;
+        clickValue++;
+        multiplierCost += 50;
+        document.getElementById("points").textContent = points;
+        document.getElementById("multiplier-cost").textContent = multiplierCost;
+        updatePlayerData();
+        let catGif = document.getElementById("eyebrowGif");
+        catGif.style.display = "block";
+        setTimeout(() => catGif.style.display = "none", 2000);
+      } else {
+        alert("Not enough points for Cat Upgrade!");
+      }
+    });
+    document.getElementById("buy-auto").addEventListener("click", function() {
+      if (points >= autoCost) {
+        points -= autoCost;
+        autoClickers++;
+        autoCost += 100;
+        document.getElementById("points").textContent = points;
+        document.getElementById("auto-cost").textContent = autoCost;
+        updatePlayerData();
+        let ratGif = document.getElementById("ratGif");
+        ratGif.style.display = "block";
+        setTimeout(() => ratGif.style.display = "none", 2000);
+        if (!window.autoInterval) {
+          window.autoInterval = setInterval(() => {
+            points += autoClickers;
+            document.getElementById("points").textContent = points;
+            updatePlayerData();
+          }, 1000);
+        }
+      } else {
+        alert("Not enough points for Rat Upgrade!");
+      }
+    });
+
+    // ----------------------
+    // Firebase-based Player and Cool Guy Logic
+    // ----------------------
+    let players = [];
+    db.collection("players").onSnapshot(snapshot => {
+      players = [];
+      snapshot.forEach(doc => {
+        players.push(doc.data());
+      });
+      populateModalPlayerList();
+      updateLeaderboard();
+    });
+    let coolGuys = [];
+    db.collection("coolguys").onSnapshot(snapshot => {
+      coolGuys = [];
+      snapshot.forEach(doc => {
+        coolGuys.push(doc.data());
+      });
+      updateCoolGuyList();
+      populateModalPlayerList();
+      checkCoolGuyStatus();
+    });
+    const OWNER_ID = "user418561";
+    if (currentUserID === OWNER_ID) {
+      document.getElementById("owner-menu").style.display = "block";
+    } else {
+      document.getElementById("owner-menu").style.display = "none";
+    }
+    function updateCoolGuyList() {
+      const coolGuyList = document.getElementById("coolguy-list-ul");
+      coolGuyList.innerHTML = "";
+      coolGuys.forEach(coolGuy => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${coolGuy.id}</span> <button onclick="removeCoolGuy('${coolGuy.id}')">Remove Cool Guy</button>`;
+        coolGuyList.appendChild(li);
+      });
+    }
+    function assignCoolGuy(playerId) {
+      const player = players.find(p => p.id === playerId);
+      if (player && !coolGuys.some(c => c.id === playerId)) {
+        db.collection("coolguys").doc(playerId).set(player)
+          .then(() => {
+            alert(`${player.id} has been assigned as a cool guy.`);
+          })
+          .catch(error => {
+            console.error("Error assigning cool guy:", error);
+          });
+      }
+    }
+    function removeCoolGuy(playerId) {
+      db.collection("coolguys").doc(playerId).delete()
+        .then(() => {
+          console.log("Cool guy removed");
+        })
+        .catch(error => {
+          console.error("Error removing cool guy:", error);
         });
+    }
+    function updateLeaderboard() {
+      const leaderboardBody = document.getElementById("leaderboard-body");
+      leaderboardBody.innerHTML = "";
+      const sortedPlayers = players.sort((a, b) => (b.score || 0) - (a.score || 0));
+      sortedPlayers.forEach((player, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${index + 1}</td><td>${player.username || "Guest"}</td><td>${player.score || 0}</td>`;
+        leaderboardBody.appendChild(tr);
+      });
+    }
+    document.getElementById("assign-coolguy-btn").addEventListener("click", openModal);
+    function openModal() {
+      document.getElementById("assign-moderator-modal").style.display = "flex";
+      populateModalPlayerList();
+    }
+    function closeModal() {
+      document.getElementById("assign-moderator-modal").style.display = "none";
+    }
+    function populateModalPlayerList() {
+      const modalPlayerList = document.getElementById("player-list");
+      modalPlayerList.innerHTML = "";
+      players.forEach(player => {
+        if (!coolGuys.some(c => c.id === player.id)) {
+          const li = document.createElement("li");
+          li.innerHTML = `<span>${player.id}</span> <button onclick="assignCoolGuy('${player.id}')">Assign Cool Guy</button>`;
+          modalPlayerList.appendChild(li);
+        }
+      });
+    }
+    function filterPlayers() {
+      const searchTerm = document.getElementById("search-bar").value.toLowerCase();
+      const modalPlayerList = document.getElementById("player-list");
+      modalPlayerList.innerHTML = "";
+      const filteredPlayers = players.filter(player =>
+        player.id.toLowerCase().includes(searchTerm) && !coolGuys.some(c => c.id === player.id)
+      );
+      filteredPlayers.forEach(player => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${player.id}</span> <button onclick="assignCoolGuy('${player.id}')">Assign Cool Guy</button>`;
+        modalPlayerList.appendChild(li);
+      });
+    }
+    // Check if current user is a cool guy or the owner, and show the cool guy menu if so
+    function checkCoolGuyStatus() {
+      let isCoolGuy = coolGuys.some(c => c.id === currentUserID) || currentUserID === OWNER_ID;
+      if(isCoolGuy) {
+        document.getElementById("coolguy-menu").style.display = "block";
+      } else {
+        document.getElementById("coolguy-menu").style.display = "none";
+      }
+    }
 
-        // Event listener for auto clicker upgrade
-        document.getElementById("auto-clicker").addEventListener("click", function() {
-            if (points >= 100) {
-                points -= 100; // Deduct points for auto-clicker
-                autoClicker = true;
-                updatePoints();
-
-                // Start auto-clicker functionality (adds 1 point every second)
-                if (autoClicker && !autoClickerInterval) {
-                    autoClickerInterval = setInterval(() => {
-                        points += clicksPerClick;
-                        updatePoints();
-                    }, 1000); // Adds points every second
-                }
-            }
+    // ----------------------
+    // Jumpscare Functionality for Cool Guys
+    // ----------------------
+    document.getElementById("jumpscare-player-btn").addEventListener("click", function() {
+      document.getElementById("jumpscare-modal").style.display = "flex";
+    });
+    document.getElementById("cancel-jumpscare-btn").addEventListener("click", function() {
+      document.getElementById("jumpscare-modal").style.display = "none";
+    });
+    document.getElementById("trigger-jumpscare-btn").addEventListener("click", function() {
+      var targetID = document.getElementById("jumpscare-target").value.trim();
+      if(targetID !== "") {
+        db.collection("jumpscares").doc(targetID).set({
+          triggered: true,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          by: currentUserID
+        }).then(() => {
+          alert("Jumpscare triggered for " + targetID);
+          document.getElementById("jumpscare-modal").style.display = "none";
+          document.getElementById("jumpscare-target").value = "";
+        }).catch(error => {
+          console.error("Error triggering jumpscare:", error);
         });
+      }
+    });
+    // Listen for jumpscare events for the current user
+    db.collection("jumpscares").doc(currentUserID).onSnapshot(doc => {
+      if(doc.exists && doc.data().triggered) {
+        triggerJumpscareEffect();
+        setTimeout(() => {
+          db.collection("jumpscares").doc(currentUserID).delete();
+          document.getElementById("jumpscare-overlay").style.display = "none";
+          document.getElementById("click-sound").volume = 1.0;
+          let jsSound = document.getElementById("jumpscare-sound");
+          jsSound.pause();
+          jsSound.currentTime = 0;
+        }, 3000);
+      }
+    });
+    function triggerJumpscareEffect() {
+      document.getElementById("click-sound").volume = 0.5;
+      document.getElementById("jumpscare-overlay").style.display = "block";
+      let jsSound = document.getElementById("jumpscare-sound");
+      jsSound.volume = 1.0;
+      jsSound.play();
+    }
 
-        // Event listener for multiplier upgrade
-        document.getElementById("multiplier-upgrade").addEventListener("click", function() {
-            if (points >= 50) {
-                points -= 50; // Deduct points for multiplier upgrade
-                clicksPerClick *= 2; // Multiply clicks per click by 2
-                updatePoints();
-            }
+    // ----------------------
+    // Meme Rain Functionality for Cool Guys with 10-second click boost, rain sound, and 1-minute cooldown
+    // ----------------------
+    function showMemeRainText() {
+      const textDiv = document.createElement("div");
+      textDiv.textContent = "Meme Rain 10 click boost per click";
+      textDiv.style.position = "fixed";
+      textDiv.style.top = "40%";
+      textDiv.style.left = "50%";
+      textDiv.style.transform = "translate(-50%, -50%)";
+      textDiv.style.background = "rgba(0, 0, 0, 0.7)";
+      textDiv.style.color = "white";
+      textDiv.style.padding = "20px";
+      textDiv.style.borderRadius = "8px";
+      textDiv.style.fontSize = "24px";
+      textDiv.style.zIndex = "3000";
+      document.body.appendChild(textDiv);
+      setTimeout(() => {
+        textDiv.remove();
+      }, 10000);
+    }
+
+    function startMemeRain() {
+      // Activate click boost for 10 seconds
+      memeBoostActive = true;
+      setTimeout(() => {
+        memeBoostActive = false;
+      }, 10000);
+
+      // Show the text pop-up overlay
+      showMemeRainText();
+      
+      // Play the rain sound on loop
+      const rainSound = document.getElementById("rain-sound");
+      rainSound.loop = true;
+      rainSound.play();
+      
+      const memes = ["meme1.png", "meme2.png", "meme3.png"];
+      const rainDuration = 10000;
+      const intervalTime = 300;
+      const endTime = Date.now() + rainDuration;
+      
+      const interval = setInterval(() => {
+        if (Date.now() > endTime) {
+          clearInterval(interval);
+          rainSound.pause();
+          rainSound.currentTime = 0;
+          return;
+        }
+        const img = document.createElement("img");
+        img.src = memes[Math.floor(Math.random() * memes.length)];
+        img.className = "meme-rain-image";
+        img.style.left = Math.random() * window.innerWidth + "px";
+        document.body.appendChild(img);
+        setTimeout(() => {
+          document.body.removeChild(img);
+        }, 3000);
+      }, intervalTime);
+    }
+
+    function startMemeRainCooldown() {
+      const cooldownDuration = 60000;
+      const bar = document.getElementById("meme-cooldown-bar");
+      const button = document.getElementById("meme-rain-btn");
+      button.disabled = true;
+      bar.style.width = "100%";
+      let startTime = Date.now();
+      let interval = setInterval(() => {
+        let elapsed = Date.now() - startTime;
+        let remaining = cooldownDuration - elapsed;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          bar.style.width = "0%";
+          button.disabled = false;
+        } else {
+          let percent = (remaining / cooldownDuration) * 100;
+          bar.style.width = percent + "%";
+        }
+      }, 100);
+    }
+
+    document.getElementById("meme-rain-btn").addEventListener("click", function() {
+      if (!this.disabled) {
+        startMemeRain();
+        startMemeRainCooldown();
+      }
+    });
+
+    // ----------------------
+    // Owner Menu: Clear All Game Data Functionality with Custom Modal
+    // This resets each player's score and upgrade fields to their default values.
+    // ----------------------
+    document.getElementById("clear-all-data").addEventListener("click", function() {
+      document.getElementById("clear-data-modal").style.display = "flex";
+    });
+    document.getElementById("cancel-clear-data").addEventListener("click", function() {
+      document.getElementById("clear-data-modal").style.display = "none";
+    });
+    document.getElementById("confirm-clear-data").addEventListener("click", function() {
+      db.collection("players").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          doc.ref.update({
+            score: 0,
+            clickValue: 1,
+            multiplierCost: 50,
+            autoCost: 100,
+            autoClickers: 0
+          });
         });
+      }).then(() => {
+        alert("All players' points and upgrades have been reset.");
+        document.getElementById("clear-data-modal").style.display = "none";
+      }).catch(error => {
+        console.error("Error clearing game data:", error);
+        alert("Error clearing game data.");
+        document.getElementById("clear-data-modal").style.display = "none";
+      });
+    });
 
-        // Play background music when any click occurs on the page
-        document.addEventListener("click", function() {
-            let audio = document.getElementById("background-music");
-            if (audio.paused) {
-                audio.play();
-            }
+    // ----------------------
+    // Change Name Functionality
+    // ----------------------
+    document.getElementById("change-name-btn").addEventListener("click", function() {
+      document.getElementById("name-input").style.display = "inline-block";
+      document.getElementById("confirm-name").style.display = "inline-block";
+    });
+    document.getElementById("confirm-name").addEventListener("click", function() {
+      const newName = document.getElementById("name-input").value.trim();
+      if(newName !== "") {
+        localStorage.setItem("playerName", newName);
+        // Use update() to change the username field
+        db.collection("players").doc(currentUserID).update({ username: newName })
+          .then(() => {
+            console.log("Name successfully updated to:", newName);
+          })
+          .catch(error => {
+            console.error("Error updating name in Firestore:", error);
+          });
+      }
+      document.getElementById("name-input").value = "";
+      document.getElementById("name-input").style.display = "none";
+      document.getElementById("confirm-name").style.display = "none";
+    });
+
+    // ----------------------
+    // Chat Functionality
+    // ----------------------
+    db.collection("chat").orderBy("timestamp").onSnapshot(snapshot => {
+      const chatMessagesDiv = document.getElementById("chat-messages");
+      chatMessagesDiv.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        let timeStr = "";
+        if(data.timestamp && data.timestamp.toDate) {
+          timeStr = data.timestamp.toDate().toLocaleString();
+        }
+        const messageDiv = document.createElement("div");
+        messageDiv.style.marginBottom = "5px";
+        messageDiv.innerHTML = `<strong>${data.sender} [${timeStr}]:</strong> ${data.message}`;
+        chatMessagesDiv.appendChild(messageDiv);
+      });
+      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    });
+    document.getElementById("chat-send").addEventListener("click", function() {
+      const chatInput = document.getElementById("chat-input");
+      const message = chatInput.value.trim();
+      if (message !== "") {
+        db.collection("chat").add({
+          sender: playerName,
+          message: message,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          chatInput.value = "";
+        }).catch(error => {
+          console.error("Error sending message: ", error);
         });
-
-        // Initialize game with the "Click Me!" button enabled
-        document.getElementById("clicker-button").disabled = false;
-        updatePoints(); // Update the initial points and button states
-    </script>
+      }
+    });
+    document.getElementById("clear-chat").addEventListener("click", function() {
+      db.collection("chat").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          doc.ref.delete();
+        });
+      }).then(() => {
+        console.log("Chat cleared.");
+      }).catch(error => {
+        console.error("Error clearing chat:", error);
+      });
+    });
+  </script>
 </body>
 </html>
-
